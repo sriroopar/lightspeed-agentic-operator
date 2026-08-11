@@ -159,6 +159,11 @@ func (r *AgenticRunReconciler) handleRevision(
 	meta.RemoveStatusCondition(&run.Status.Conditions, agenticv1alpha1.AgenticRunConditionVerified)
 	meta.RemoveStatusCondition(&run.Status.Conditions, agenticv1alpha1.AgenticRunConditionEscalated)
 	resetExecutionAndVerification(&run.Status.Steps)
+	// The run is leaving its terminal phase to re-analyze; clear terminalTime
+	// so that if it reaches a terminal phase again, handleTerminalTTL stamps
+	// a fresh timestamp instead of computing expiry off the prior terminal
+	// event (see run-lifecycle.md rule 23/24).
+	run.Status.TerminalTime = nil
 	meta.SetStatusCondition(&run.Status.Conditions, metav1.Condition{
 		Type:               agenticv1alpha1.AgenticRunConditionAnalyzed,
 		Status:             metav1.ConditionUnknown,
